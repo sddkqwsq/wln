@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>江蕊，生日快乐</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(circle at center, #120920 0%, #05020a 78%);
+    font-family: "Microsoft YaHei", "SimHei", sans-serif;
+    user-select: none;
+  }
+
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+  }
+
+  .screen {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  /* 🎁 原版宝箱 */
+  #giftBox {
+    width: 110px;
+    height: 90px;
+    cursor: pointer;
+    position: relative;
+    z-index: 3;
+    animation: floatBox 2.4s ease-in-out infinite;
+    filter: drop-shadow(0 0 18px rgba(255, 215, 120, 0.55));
+    pointer-events: auto;
+  }
+
+  @keyframes floatBox {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  #giftBox.opened {
+    animation: none;
+    pointer-events: auto;
+  }
+
+  #giftBox.disappear {
+    opacity: 0;
+    transform: scale(0.6);
+    pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .lid, .body {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    transform-origin: center bottom;
+  }
+
+  .lid {
+    top: 0;
+    height: 42px;
+    z-index: 4;
+  }
+
+  .body {
+    top: 36px;
+    height: 54px;
+  }
+
+  #giftBox.opened .lid {
+    transform: translateY(-55px) rotate(-18deg);
+  }
+
+  /* 🎂 蛋糕，宝箱消失后出现，全程保留 */
+  #cakeBox {
+    width: 160px;
+    height: 180px;
+    position: absolute;
+    z-index: 2;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 1s ease, transform 1s ease;
+  }
+  #cakeBox.show {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .blessing-heart {
+    position: absolute;
+    top: 46%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 340px;
+    height: 340px;
+    opacity: 0;
+    transition: all 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  .blessing-heart.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+
+  .blessing-heart.hide {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+
+  .blessing-heart span {
+    position: absolute;
+    color: #fff;
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px #ff71a3, 0 0 16px #ff4f81;
+    white-space: nowrap;
+  }
+
+  .final-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -40%) scale(0.7);
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 6;
+    transition: all 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .final-message.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+
+  .final-message .name {
+    font-size: 46px;
+    font-weight: bold;
+    color: #fff3f8;
+    letter-spacing: 8px;
+    text-shadow:
+      0 0 10px #ff9ec3,
+      0 0 24px #ff4f81,
+      0 0 48px #ff2d8f,
+      0 0 80px rgba(255, 45, 143, 0.55);
+    margin-bottom: 16px;
+  }
+
+  .final-message .line2 {
+    font-size: 24px;
+    color: #ffd1e8;
+    letter-spacing: 5px;
+    text-shadow:
+      0 0 12px #ff71a3,
+      0 0 28px #ff4f81;
+    margin-bottom: 12px;
+  }
+
+  .final-message .line3 {
+    font-size: 20px;
+    color: #ffe4f1;
+    letter-spacing: 4px;
+    text-shadow:
+      0 0 10px #ff9ec3,
+      0 0 22px #ff71a3;
+    margin-bottom: 28px;
+  }
+
+  .final-message .english {
+    font-size: 34px;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 5px;
+    text-shadow:
+      0 0 14px #ff71a3,
+      0 0 32px #ff4f81,
+      0 0 60px #ff2d8f;
+  }
+
+  .final-message .english span {
+    margin-left: 12px;
+  }
+
+  .restart-btn {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 22px;
+    background: transparent;
+    border: 1px solid #ff71a3;
+    color: #ffd1e8;
+    border-radius: 30px;
+    font-size: 14px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s ease;
+    z-index: 7;
+  }
+
+  .restart-btn.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .restart-btn:hover {
+    background: #ff71a3;
+    color: #fff;
+  }
+</style>
+</head>
+
+<body>
+<canvas id="canvas"></canvas>
+
+<div class="screen">
+  <!-- 🎁 原版宝箱 -->
+  <div id="giftBox">
+    <svg class="lid" viewBox="0 0 110 42" fill="none">
+      <path d="M5 12 L55 2 L105 12 L105 40 L5 40 Z" fill="#8b4513" />
+      <path d="M46 2 L64 2 L64 40 L46 40 Z" fill="#ffd24d" />
+      <circle cx="55" cy="14" r="7" fill="#ff4f81" />
+    </svg>
+    <svg class="body" viewBox="0 0 110 54" fill="none">
+      <path d="M5 8 L105 8 L105 54 L5 54 Z" fill="#a0522d" />
+      <path d="M46 8 L64 8 L64 54 L46 54 Z" fill="#ffd24d" />
+      <path d="M5 22 L105 22" stroke="#7b3410" stroke-width="2" />
+      <path d="M5 36 L105 36" stroke="#7b3410" stroke-width="2" />
+    </svg>
+  </div>
+
+  <!-- 🎂 蛋糕，宝箱消失后出现，全程保留 -->
+  <div id="cakeBox">
+    <svg viewBox="0 0 160 180">
+      <!-- 蛋糕底座 -->
+      <ellipse cx="80" cy="140" rx="70" ry="22" fill="#f8c888"/>
+      <rect x="15" y="80" width="130" height="60" rx="8" fill="#ffddaa"/>
+      <!-- 奶油 -->
+      <ellipse cx="80" cy="80" rx="65" ry="18" fill="#fff8ee"/>
+      <!-- 蜡烛 -->
+      <rect x="45" y="30" width="8" height="40" fill="#ff6666"/>
+      <rect x="70" y="20" width="8" height="50" fill="#6666ff"/>
+      <rect x="95" y="35" width="8" height="35" fill="#66ff66"/>
+      <!-- 火焰 -->
+      <circle cx="49" cy="26" r="4" fill="#ffaa33"/>
+      <circle cx="74" cy="16" r="4" fill="#ffaa33"/>
+      <circle cx="99" cy="31" r="4" fill="#ffaa33"/>
+    </svg>
+  </div>
+
+  <div class="blessing-heart" id="blessingHeart"></div>
+
+  <div class="final-message" id="finalMessage">
+    <div class="name">江蕊</div>
+    <div class="line2">生日快乐，祝愿</div>
+    <div class="line3">在数不尽的明天，我们永远“下次见”</div>
+    <div class="english">Happy birthday <span>🎂</span></div>
+  </div>
+
+  <button class="restart-btn" id="restartBtn">重新播放</button>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let W, H;
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W;
+  canvas.height = H;
+}
+resize();
+window.addEventListener("resize", resize);
+
+const giftBox = document.getElementById("giftBox");
+const cakeBox = document.getElementById("cakeBox");
+const blessingHeart = document.getElementById("blessingHeart");
+const finalMessage = document.getElementById("finalMessage");
+const restartBtn = document.getElementById("restartBtn");
+
+// 🚩 阶段：
+// 0 初始等待点击宝箱
+// 1 宝箱开盖，粒子播放完成，等待再次点击
+// 2 宝箱消失，蛋糕出现，等待再次点击
+// 3 心形祝福弹出，等待再次点击
+// 4 最终字幕弹出
+let stage = 0;
+let particles = [];
+let rings = [];
+let t = 0;
+
+const blessingWords = [
+  "生日快乐", "愿你新的一岁", "继续闪闪发光",
+  "开心快乐", "平安顺遂", "梦想成真",
+  "被爱包围", "好运常在", "笑容常在",
+  "自由灿烂", "万事胜意", "可爱不止"
+];
+
+function createBlessingHeart() {
+  blessingHeart.innerHTML = "";
+  const cx = 170;
+  const cy = 170;
+  const scale = 13;
+  const count = blessingWords.length;
+
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2;
+    const x = 16 * Math.pow(Math.sin(angle), 3);
+    const y = -(13 * Math.cos(angle) - 5 * Math.cos(2 * angle) - 2 * Math.cos(3 * angle) - Math.cos(4 * angle));
+
+    const span = document.createElement("span");
+    span.textContent = blessingWords[i];
+    span.style.left = `${cx + x * scale}px`;
+    span.style.top = `${cy + y * scale}px`;
+    span.style.transform = "translate(-50%, -50%)";
+    blessingHeart.appendChild(span);
+  }
+}
+
+// 粒子类，宝箱打开流出粒子
+class Particle {
+  constructor(x, y, color) {
+    this.x = x;
+    this.y = y;
+    this.vx = (Math.random() - 0.5) * 11;
+    this.vy = (Math.random() - 0.5) * 11 - 2;
+    this.r = Math.random() * 3 + 1.4;
+    this.color = color;
+    this.life = 110;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += 0.04;
+    this.life--;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = this.color;
+    ctx.fill();
+  }
+}
+
+class Ring {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.r = 10;
+    this.maxR = 260;
+    this.alpha = 1;
+  }
+  update() {
+    this.r += 4;
+    this.alpha -= 0.012;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255, 215, 120, ${this.alpha})`;
+    ctx.lineWidth = 3;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = "#ffd778";
+    ctx.stroke();
+  }
+}
+
+// 🖱️ 全局点击，控制阶段推进
+document.addEventListener("click", () => {
+  if(stage === 0){
+    // 第一步：点击宝箱，开盖，释放粒子
+    stage = 1;
+    giftBox.classList.add("opened");
+    const centerX = W / 2;
+    const centerY = H / 2;
+    const colors = ["#ff4f81", "#ffd778", "#7ad7ff", "#b57bff", "#7cff9f"];
+    for (let i = 0; i < 140; i++) {
+      particles.push(new Particle(centerX, centerY, colors[i % colors.length]));
+    }
+    rings.push(new Ring(centerX, centerY));
+    rings.push(new Ring(centerX, centerY + 60));
+  }else if(stage === 1){
+    // 第二步：再次点击，宝箱消失，蛋糕出现
+    stage = 2;
+    giftBox.classList.add("disappear");
+    cakeBox.classList.add("show");
+  }else if(stage === 2){
+    // 第三步：再次点击，心形祝福弹出
+    stage = 3;
+    createBlessingHeart();
+    blessingHeart.classList.add("show");
+  }else if(stage === 3){
+    // 第四步：再次点击，心形消失，弹出最终字幕
+    stage = 4;
+    blessingHeart.classList.remove("show");
+    blessingHeart.classList.add("hide");
+    finalMessage.classList.add("show");
+    restartBtn.classList.add("show");
+  }
+});
+
+// 重新播放
+restartBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  stage = 0;
+  particles = [];
+  rings = [];
+  t = 0;
+  giftBox.classList.remove("opened", "disappear");
+  cakeBox.classList.remove("show");
+  blessingHeart.classList.remove("show", "hide");
+  finalMessage.classList.remove("show");
+  restartBtn.classList.remove("show");
+});
+
+function loop() {
+  ctx.fillStyle = "rgba(18, 14, 32, 0.18)";
+  ctx.fillRect(0, 0, W, H);
+  t += 0.04;
+
+  // 更新绘制粒子
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.update();
+    p.draw();
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+  // 更新绘制光环
+  for (let i = rings.length - 1; i >= 0; i--) {
+    const r = rings[i];
+    r.update();
+    r.draw();
+    if (r.alpha <= 0) rings.splice(i, 1);
+  }
+
+  // 最终阶段 光晕特效
+  if (stage === 4) {
+    const cx = W / 2;
+    const cy = H / 2;
+    const gradient = ctx.createRadialGradient(cx, cy, 40, cx, cy, 420);
+    gradient.addColorStop(0, "rgba(255, 105, 163, 0.35)");
+    gradient.addColorStop(0.45, "rgba(255, 79, 129, 0.18)");
+    gradient.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.beginPath();
+    ctx.arc(cx, cy, 420, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.shadowBlur = 0;
+    ctx.fill();
+
+    for (let i = 0; i < 18; i++) {
+      const angle = t * 0.4 + (i / 18) * Math.PI * 2;
+      const rr = 260 + Math.sin(t * 2 + i) * 18;
+      const x = cx + Math.cos(angle) * rr;
+      const y = cy + Math.sin(angle) * rr * 0.55;
+      ctx.beginPath();
+      ctx.arc(x, y, 2, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255, 209, 232, 0.9)";
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "#ff71a3";
+      ctx.fill();
+    }
+  }
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
